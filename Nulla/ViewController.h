@@ -12,8 +12,6 @@
 #import "NLMediaViewController.h"
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
-#import <AVFoundation/AVAudioPlayer.h>
-#import "NLMediaViewController.h"
 #import "NullaAudipPlayer.h"
 
 
@@ -21,7 +19,7 @@
 
 BOOL *artistsflag,*albumflag,*songsflag;;
 
-@interface ViewController : UIViewController<IDScrollableTabBarDelegate,UITableViewDataSource,UITableViewDelegate>{
+@interface ViewController : UIViewController<IDScrollableTabBarDelegate,  UITableViewDataSource,UITableViewDelegate>{
     MPMediaQuery *artistsQuery,*albumQuery,*SongsQuery;// Медиатека по исполнителям/альбомам/песням
     NSArray *artistsArray,*sectionedArtistsArray, *albumArray,*sectionedAlbumArray;// массивы артистов/артистов деленных по буквам и альбомов //альбомов разделенных по буквам
     UILocalizedIndexedCollation *collation;// отвечает за язык секторов таблицы

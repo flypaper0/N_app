@@ -61,7 +61,10 @@
           MPMediaItem *temp = [self.dataGot  objectAtIndex:indexPath.row];
           cell.textLabel.text = [temp valueForProperty:MPMediaItemPropertyTitle];
           cell.detailTextLabel.text=@"";
+        
+    
       }
+    
     return cell;
 }
 - (void)didReceiveMemoryWarning

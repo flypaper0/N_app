@@ -14,7 +14,8 @@ NLMediaViewController *oldvc;
 
 @end
 
-@implementation ViewController{
+@implementation ViewController
+{
      NSMutableDictionary *_viewControllersByIdentifier;
 }
 @synthesize artistsQuery,albumQuery,artistsArray,sectionedArtistsArray,albumArray,sectionedAlbumArray, songQuery,songArray, sectionedSongArray, collation,firstView;
@@ -38,11 +39,8 @@ NLMediaViewController *oldvc;
     artistsflag=YES;//флаги выбранной медиотеки
     albumflag=NO;
     songsflag=NO;
-
-
-    
-
 }
+
 - (NSArray *)partitionObjects:(NSArray *)array collationStringSelector:(SEL)selector//сортировка по буквам медиотеки
 {
     self.collation = [UILocalizedIndexedCollation currentCollation];//получаю буквы языка системы
@@ -297,7 +295,6 @@ NLMediaViewController *oldvc;
         [self.navigationController pushViewController:nap animated:YES];
         
     }
-    
 }
 
 

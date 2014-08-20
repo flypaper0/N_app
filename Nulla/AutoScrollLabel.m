@@ -35,7 +35,7 @@
     self.backgroundColor = [UIColor clearColor];
 	for (int i=0; i< NUM_LABELS; ++i){
 		label[i] = [[UILabel alloc] init];
-		label[i].textColor = [UIColor whiteColor];
+//		label[i].textColor = [UIColor whiteColor];
 		label[i].backgroundColor = [UIColor clearColor];
 		[self.scrollView addSubview:label[i]];
 	}

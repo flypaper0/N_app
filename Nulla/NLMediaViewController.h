@@ -11,7 +11,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import "ViewController.h"
 #import "AppDelegate.h"
-
+#import "TDAudioStreamer.h"
+#import "TDSession.h"
 
 
 
@@ -27,4 +28,7 @@
 
 @property (strong,nonatomic) NSArray *dataGot;
 @property (nonatomic,readwrite )NSInteger *flag;
+
+@property (strong,nonatomic) TDSession *session;
+
 @end

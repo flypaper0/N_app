@@ -7,8 +7,12 @@
 //
 
 #import "NullaAudipPlayer.h"
+#import "TDAudioStreamer.h"
+#import "TDSession.h"
 
-@interface NullaAudipPlayer ()
+
+
+@interface NullaAudipPlayer () <TDSessionDelegate>
 - (IBAction)previosAction:(id)sender;//Баттоны
 - (IBAction)playPause:(id)sender;
 - (IBAction)nextAction:(id)sender;
@@ -36,11 +40,13 @@
 @property (nonatomic) BOOL scrobbling;//Если скрол дивжется
 @property (strong, nonatomic) AVPlayerItem * currentItem;//Итем плеера
 @property (nonatomic, assign) float timerInterval;//Интервал времени, забыл зачем
-
+@property (strong, nonatomic) TDAudioOutputStreamer *outputStreamer;
+@property (strong, nonatomic) TDSession *session;
 
 @end
 
 @implementation NullaAudipPlayer
+
 @synthesize artistNameLabel;
 @synthesize trackNameTitle;
 @synthesize albumTitle;
@@ -50,6 +56,9 @@
 @synthesize rewindButton;
 @synthesize fastForwardButton;
 @synthesize currentItem,song;
+@synthesize deviceName;
+
+
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
@@ -63,6 +72,16 @@
 
 - (void)viewDidLoad
 {
+    [super viewDidLoad];
+    
+    deviceName = [[UIDevice currentDevice] name];
+    _session = [[TDSession alloc] initWithPeerDisplayName:@"Host"];
+    
+    
+    SearchViewController *dataSaver = [self.storyboard instantiateViewControllerWithIdentifier:@"SearchViewController"];
+    
+    dataSaver.sessionFromHost = _session;
+    
     //Получаем адрес песни
     NSURL *Url1=[song valueForProperty:MPMediaItemPropertyAssetURL];
     //получаем итем для плеера
@@ -72,38 +91,70 @@
 
     //функция где то ниже
     [self updateUIForCurrentTrack] ;
+    
     //цвет фона. Картинки брал из другого плеера, что так сказать нашел то и взял
-   self.view.backgroundColor = [[UIColor alloc] initWithPatternImage:[UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/black_linen_v2"]];
+//   self.view.backgroundColor = [[UIColor alloc] initWithPatternImage:[UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/black_linen_v2"]];
+    
    //Всякая фигня с графикой
-    UIImage* knob = [UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/VolumeKnob"];
-    [_progressSlider setThumbImage:knob forState:UIControlStateNormal];
-    _progressSlider.maximumTrackTintColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:1];
-    UIImage* minImg = [[UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/speakerSliderMinValue.png"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 16, 0, 16)];
-    UIImage* maxImg = [[UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/speakerSliderMaxValue.png"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 16, 0, 16)];
-    [_progressSlider setMinimumTrackImage:minImg forState:UIControlStateNormal];
-    [_progressSlider setMaximumTrackImage:maxImg forState:UIControlStateNormal];
-    
-    rewindButton.tintColor = UIColor.whiteColor;
-    playButton.tintColor = UIColor.whiteColor;
-    fastForwardButton.tintColor = UIColor.whiteColor;
-    
-    [self.artistNameLabel setShadowColor:[UIColor blackColor]];
-    [self.artistNameLabel setShadowOffset:CGSizeMake(0, -1)];
-    
-    [self.albumTitle setShadowColor:[UIColor blackColor]];
-    [self.albumTitle setShadowOffset:CGSizeMake(0, -1)];
-    [self.artistNameLabel setTextColor:[UIColor lightTextColor]];
-    [self.artistNameLabel setFont:[UIFont boldSystemFontOfSize:12]];
-    
-    [self.albumTitle setTextColor:[UIColor lightTextColor]];
-    [self.albumTitle setFont:[UIFont boldSystemFontOfSize:12]];
-    
-    self.trackNameTitle.textColor = [UIColor blackColor];
-    [self.trackNameTitle setFont:[UIFont boldSystemFontOfSize:12]];
+//    UIImage* knob = [UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/VolumeKnob"];
+//    [_progressSlider setThumbImage:knob forState:UIControlStateNormal];
+//    _progressSlider.maximumTrackTintColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:1];
+//    UIImage* minImg = [[UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/speakerSliderMinValue.png"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 16, 0, 16)];
+//    UIImage* maxImg = [[UIImage imageNamed:@"BeamMusicPlayerController.bundle/images/speakerSliderMaxValue.png"] resizableImageWithCapInsets:UIEdgeInsetsMake(0, 16, 0, 16)];
+//    [_progressSlider setMinimumTrackImage:minImg forState:UIControlStateNormal];
+//    [_progressSlider setMaximumTrackImage:maxImg forState:UIControlStateNormal];
+//    
+//    rewindButton.tintColor = UIColor.whiteColor;
+//    playButton.tintColor = UIColor.whiteColor;
+//    fastForwardButton.tintColor = UIColor.whiteColor;
+//    
+//    [self.artistNameLabel setShadowColor:[UIColor blackColor]];
+//    [self.artistNameLabel setShadowOffset:CGSizeMake(0, -1)];
+//    
+//    [self.albumTitle setShadowColor:[UIColor blackColor]];
+//    [self.albumTitle setShadowOffset:CGSizeMake(0, -1)];
+//    [self.artistNameLabel setTextColor:[UIColor lightTextColor]];
+//    [self.artistNameLabel setFont:[UIFont boldSystemFontOfSize:12]];
+//    
+//    [self.albumTitle setTextColor:[UIColor lightTextColor]];
+//    [self.albumTitle setFont:[UIFont boldSystemFontOfSize:12]];
+//    
+//    self.trackNameTitle.textColor = [UIColor blackColor];
+//    [self.trackNameTitle setFont:[UIFont boldSystemFontOfSize:12]];
     [self play];
- [super viewDidLoad];
-    // Do any additional setup after loading the view.
+    
+// save track data for stream
+    NSMutableDictionary *info = [NSMutableDictionary dictionary];
+    info[@"title"] = [self.song valueForProperty:MPMediaItemPropertyTitle] ? [self.song valueForProperty:MPMediaItemPropertyTitle] : @"";
+    info[@"artist"] = [self.song valueForProperty:MPMediaItemPropertyArtist] ? [self.song valueForProperty:MPMediaItemPropertyArtist] : @"";
+    
+    MPMediaItemArtwork *artwork = [self.song valueForProperty:MPMediaItemPropertyArtwork];
+    UIImage *image = [artwork imageWithSize:self.albumArtImageView.frame.size];
+    if (image)
+        info[@"artwork"] = image;
+    
+    if (info[@"artwork"])
+        self.albumArtImageView.image = info[@"artwork"];
+    else
+        self.albumArtImageView.image = nil;
+    
+    [self.session sendData:[NSKeyedArchiver archivedDataWithRootObject:[info copy]]];
+    
+    // start stream
+    NSArray *peers = [self.session connectedPeers];
+    
+    if (peers.count) {
+        self.outputStreamer = [[TDAudioOutputStreamer alloc] initWithOutputStream:[self.session outputStreamForPeer:peers[0]]];
+        [self.outputStreamer streamAudioFromURL:[self.song valueForProperty:MPMediaItemPropertyAssetURL]];
+        [self.outputStreamer start];
+    }
+    
 }
+
+-(void)viewWillAppear:(BOOL)animated{
+    
+}
+
 //Забыл зачем но нужно
 -(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation{
     [self.albumTitle setNeedsLayout];
@@ -112,6 +163,7 @@
     
     
 }
+
 //Это со спертого Тулбара, ему они нужны
 -(UIStatusBarStyle)preferredStatusBarStyle {
     return UIStatusBarStyleLightContent;
@@ -152,6 +204,9 @@
     [self startPlaybackTickTimer];
     
     [self adjustPlayButtonState];
+    
+    [super viewDidLoad];
+
 
 }
 //Таймер, хотел циферки песни выводить, но не успел
@@ -184,7 +239,7 @@
 -(void)updateSeekUI {
         self.progressSlider.value = self.currentPlaybackPosition;
 
-       NSLog(@"progressSlider - %f", self.progressSlider.value);
+//       NSLog(@"progressSlider - %f", self.progressSlider.value);
 }
 
 -(void)updateUI {
@@ -270,9 +325,6 @@
 }
 
 
-- (IBAction)startStreamButton:(id)sender {
-}
-
 - (IBAction)sliderDidEndScrubbing:(OBSlider *)sender {
     self.scrobbling = NO;
 }
@@ -283,6 +335,23 @@
     // Dispose of any resources that can be recreated.
 }
 
+
+- (IBAction)visibleSwither:(id)sender
+{
+    UISwitch *visible = (UISwitch *) sender;
+    if (visible.on) {
+        self.session = [[TDSession alloc] initWithPeerDisplayName:@"Guest"];
+        [self.session startAdvertisingForServiceType:@"dance-party" discoveryInfo:nil];
+        self.session.delegate = self;
+        NSLog(@"Visible - on");
+    }
+    else {
+        self.session = nil;
+        [self.session stopAdvertising];
+        NSLog(@"Visible - off");
+    }
+
+}
 
 
 
